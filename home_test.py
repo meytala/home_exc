@@ -6,6 +6,10 @@ import urllib
 import shutil
 import sys
 import tarfile
+import pandas as pd
+import seenopsis
+import matplotlib.pyplot as plt
+import json
 
 
 # write a python script that receives the URL as a command-line argument and:
@@ -76,11 +80,11 @@ extract("DM_TH.tgz", "C:/Users/meyta/PycharmProjects/viz_ai")
 
 
 filename = data_manager.get_files("C:\\Users\\meyta\\PycharmProjects\\viz_ai\\", "*.dcm")[3]  ##qa tried 0, 1, 2, 3: Study Instance UID and 1.2.840.113619.2.337.3.2831186181.442.1421722000.427 are equal, SOP Instance UID differ
-print(filename)
+# print(filename)
 ds = pydicom.dcmread(filename)
 print(ds)
 print(ds.dir())       #see the attributes of each ds file
-
+# print(ds.keys())       #see all available keys
 
 
 ############alternatively:
@@ -96,10 +100,7 @@ for i in range (0,406):
 #############a glance to the file
 
 
-
-
 #potential important fields:
-
 
 # Patient's Name                    PN:  '1.2.840.113619.2.337.3.2831186181.442.1421722000.421'
 # Patient's Sex                     CS:  'M' or 'F'
@@ -159,7 +160,21 @@ class ProcessDcm:
         self.series_id = ds.SeriesInstanceUID
         self.instance_id = ds.SOPInstanceUID
         self.hospital = ds.InstitutionName
+        self.acquisition_time = ds.AcquisitionTime
+        self.acquisition_number = ds.AcquisitionNumber
+        self.instance_number = ds.InstanceNumber
+        self.content_time = ds.ContentTime
+        try:
+            self.creation_time = ds.InstanceCreationTime  ####somthing is wrong in here - one of the object does not have this attribute
+        except AttributeError as error:
+            self.creation_time = None
 
+
+
+# # - 0x0008,0x0013 - Instance​Creation​Time  TM
+# # - 0x0008,0x0032 - Acquisition​Time
+# # - 0x0020,0x0012 - Acquisition​Number
+# # - 0x0020,0x0013 - Instance​Number
 
 
 
@@ -240,8 +255,9 @@ for object in list_of_dcm_objects:
 
 
 
-
-
+############################################################################
+##########################  Q1 #############################################
+############################################################################
 
 # # 1) generate a list of patients, their age and sex --- created list of lists
 ###first chacked if a patient change age during sessions - no one did so I can run over the first study of each patient
@@ -258,8 +274,12 @@ for i in demo_list:
     if i not in first_file_list:
         first_file_list.append(i)
 
-print("q1- list of patient's ID, age and sex", first_file_list)
+print("q1- the follwing is list of (lists of) patient's ID, age and sex", first_file_list) ###list of lists
 
+
+############################################################################
+##########################  Q2 #############################################
+############################################################################
 
 # # 2) how many different hospitals do the data come from?
 
@@ -273,39 +293,91 @@ print("q2 - there are {} unique hospitals, named {}".format(len(unique_hospital)
 
 
 ############################################################################
-############################################################################
-#####################start from here#######################################
-############################################################################
-############################################################################
+##########################  Q3 #############################################
 ############################################################################
 
+#3) explore the following DICOM tags, and try to explain what they mean, and the differences and relationships between them.
+# Feel free to use appropriate visualizations as necessary.
 
-# ----------------------------------------------------------------------------------------------
-#
+# # - 0x0008,0x0013 - Instance​Creation​Time
+# # - 0x0008,0x0032 - Acquisition​Time
+# # - 0x0020,0x0012 - Acquisition​Number
+# # - 0x0020,0x0013 - Instance​Number
 
-# # write a python script that receives the URL as a command-line argument and:
-# # - downloads the file
-# # - arranges the files according to the DICOM hierarchy in an appropriate directory structure (patient/study/series). Note that patient names were replaced with IDs to protect their privacy.
-# # - performs the following tasks or answers the following questions:
-# # 1) generate a list of patients, their age and sex
-# # 2) how many different hospitals do the data come from?
-# # 3) explore the following DICOM tags, and try to explain what they mean, and the differences and relationships between them. Feel free to use appropriate visualizations as necessary.
-# # - 0x0008,0x0013
-# # - 0x0008,0x0032
-# # - 0x0020,0x0012
-# # - 0x0020,0x0013
+
+sub_dataset=[]
+for object in list_of_dcm_objects:
+    sub_dataset.append([object.dcm, object.creation_time, object.acquisition_time, object.acquisition_number, object.instance_number])
+
+
+sub_dataset = pd.DataFrame(sub_dataset)   ###sub_dataset is a pandas file
+sub_dataset.columns = ["object name", "Instance​Creation​Time", "Acquisition​Time", "Acquisition​Number", "Instance​Number"]
+
+
+
+# seenopsis.process_pandas_df(sub_dataset)
+
+
+print("what the DICOM tags mean?"
+       "reading the lit, this is the doccumentation:"
+      "0x0008,0x0013 - Instance​Creation​Time - value represenation:TM - A string of characters of the format hhmmss - Time the Protocol SOP Instance was created" 
+      "0x0008,0x0032 - Acquisition​Time -  value represenation:TM - A string of characters of the format hhmmss.ffffff (fractional seconds) - The time that the acquisition of data that resulted in this instance started." 
+      "0x0020,0x0012 - Acquisition​Number -the official doccumentation: A number identifying the single continuous gathering of data over a period of time that resulted in this instance - this is vague"
+      "you can read about the differences between instance number and Acquisition​Number in here: https://clearcanvas.ca/Home/Community/OldForums/tabid/526/aff/8/aft/1378/afv/topic/Default.aspx"
+      "0x0020,0x0013 - Instance​Number - A number that identifies a spesific image"
+      "it is important to notice that in this spesific dataset: the attribute Instance​Creation​Time is missing in 70 dcm files (17.2% of files)")
+
+
+# lets try to look on the data to see what it is in practice
+
+print(sub_dataset)
+
+print("in practice, I would aregue that the Acquisition​Time is when the data was started to gather while Instance​Creation​Time is the time the data was started to being written (created)")
+print("this is the correlation matrix of the sub_dataset", sub_dataset.corr()[1:3])
+print("So actually they do not correlate, pearson correlation of: 0.424306" )
+
+###IT MIGHT BE NICE TO LOOK ON THE DISTRIBUTION OF THE DIFFERENCES BETWEEN THE VALUES.   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+
 # # 4) How long does a typical CT scan take?
+
+###potential indicator for length of CT scan
+#Exposure Time??
+#Exposure
+#revolution time??
+#[Mid Scan Time [sec]]
+#[Duration of X-ray on]
+
+## I could not find an attribute that indicate the end time in the DICOM files, so, I can calculate the dif between time of first imag to time of last image in each patient
+# in each series take the difference of start times between last and first scan
+
+
+
+# min_time = {}
+# for object in list_of_dcm_objects:
+#     if object.patient_id in min_time:
+#         if object.study_id in min_time[object.patient_id]:
+#             if object.series_id in min_time[object.patient_id][object.study_id]:
+#                 if object.acquisition_time < min_time[object.patient_id][object.study_id][object.series_id]:
+#                     min_time[object.patient_id][object.study_id][object.series_id] = object.acquisition_time
+#             else: min_time[object.patient_id][object.study_id] = {object.series_id:object.acquisition_time}
+#         else: min_time[object.patient_id] = {object.study_id:{object.series_id:object.acquisition_time}}
+#     else: min_time.update({object.patient_id:{object.study_id:{object.series_id:object.acquisition_time}}})
 #
+# print(min_time)
 #
+# max_time = {}
+# for object in list_of_dcm_objects:
+#     if object.patient_id in max_time:
+#         if object.study_id in max_time[object.patient_id]:
+#             if object.series_id in max_time[object.patient_id][object.study_id]:
+#                 if object.acquisition_time > max_time[object.patient_id][object.study_id][object.series_id]:
+#                     max_time[object.patient_id][object.study_id][object.series_id] = object.acquisition_time
+#             else: max_time[object.patient_id][object.study_id] = {object.series_id:object.acquisition_time}
+#         else: max_time[object.patient_id] = {object.study_id:{object.series_id:object.acquisition_time}}
+#     else: max_time.update({object.patient_id:{object.study_id:{object.series_id:object.acquisition_time}}})
 #
-#
-#
-#
-#
-#
-#
-#
-#
-#
+# print(max_time)
 #
 #
