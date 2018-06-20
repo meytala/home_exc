@@ -20,15 +20,16 @@ import json
 #######and download the files to a folder###########################
 ####################################################################
 
-def get_url(url, filename, myPath):
+def get_url(url, myPath):
     with urllib.request.urlopen(url) as response, open("DM_TH.tgz", 'wb') as out_file:
          shutil.copyfileobj(response, out_file)
          data = response.read() # a `bytes` object
          out_file.write(data)
 
 # # print(sys.argv[-1])  ##qa
-url=sys.argv[-1]
-get_url(url, "DICOM", "C:/Users/meyta/PycharmProjects/viz_ai")  ### !!!!! this works on my computer. need to modify path to match the user computer
+url=sys.argv[-1]  ##read from the command line
+myPath= os.getcwd()
+get_url(url, myPath)
 
 #the command in cmd:  C:\Users\meyta\PycharmProjects\viz_ai>python home_test.py https://s3.amazonaws.com/viz_data/DM_TH.tgz
 
@@ -43,7 +44,7 @@ def extract(tar_file, my_path):
         if item.name.find(".tgz") != -1:
             extract(item.name, "./" + item.name[:item.name.rfind('/')])
 
-extract("DM_TH.tgz", "C:/Users/meyta/PycharmProjects/viz_ai")
+extract("DM_TH.tgz", myPath)
 
 
 #################################################################################
@@ -81,11 +82,11 @@ extract("DM_TH.tgz", "C:/Users/meyta/PycharmProjects/viz_ai")
 
 list_of_files= []
 for i in range (0,406):
-    filename = "dicom_{0:04}.dcm".format(i)
+    filename = "dicom_{0:04}.dcm".format(i)  ##fill with zeros to a width of 4
     ds = pydicom.dcmread(filename)
     list_of_files.append(ds)
 
-# print("first file:", list_of_files[0])              #qa - worked!!
+# print("first file:", list_of_files[3])              #qa - worked!!
 
 #############a glance to the file
 
@@ -94,7 +95,7 @@ for i in range (0,406):
 # Patient's Name                    PN:  '1.2.840.113619.2.337.3.2831186181.442.1421722000.421'
 # Patient's Sex                     CS:  'M' or 'F'
 # Patient's Age                     AS:  '011Y'   (11?)
-# Study Date                        DA: '20000101' (january 1, 2001?)
+# Study Date                        DA: '20000101' (january 1, 2001)
 
 # potential variables to idetify study:
 # Study Instance UID                UI: 1.2.840.113619.2.337.3.2831186181.442.1421722000.421     (this is the study IUD)
@@ -126,12 +127,12 @@ for i in range (0,406):
 ################create a class named ProcessDCM########################
 #######################################################################
 
-"""create a class with methods and define the files as objects"""
+####create a class with attributes
 
 class ProcessDcm:
     def __init__(self, dcm_file):
         ds = pydicom.dcmread(dcm_file)
-        self.dcm = dcm_file
+        self.file_name = dcm_file
         self.age = ds.PatientAge
         self.sex = ds.PatientSex
         self.patient_id = ds.PatientName
@@ -146,10 +147,10 @@ class ProcessDcm:
         try:
             self.creation_time = ds.InstanceCreationTime  ####somthing is wrong in here - some of the object do not have this attribute
         except AttributeError as error:
-            self.creation_time = None   ##### if this attribute was missing, I replaced it with none
+            self.creation_time = None   ##### when the attribute is missing, give it None
 
 
-###########Create a list of object based in the ProcessDcm class:
+###########Create a list of object with the attributes of ProcessDcm class:
 
 list_of_dcm_objects = [ ]
 for i in range (0,406):
@@ -198,7 +199,6 @@ unique_id_list = unique(list_of_names())
 ############################################################
 
 
-script_dir = os.path.dirname(__file__)
 
 current_directory = os.getcwd()
 for object in list_of_dcm_objects:
@@ -217,7 +217,7 @@ for object in list_of_dcm_objects:
     elif not os.path.exists(series_directory):
         os.makedirs(series_directory)
 
-    os.rename("{}\\{}".format(current_directory,object.dcm) , "{}\\{}".format(series_directory,object.dcm))
+    os.rename("{}\\{}".format(current_directory,object.file_name) , "{}\\{}".format(series_directory,object.file_name))
 
 
 
@@ -241,8 +241,12 @@ for i in demographic_list:
     if i not in first_file_list:
         first_file_list.append(i)
 
+print()
 print("Q1 - the follwing is list of (lists of) patient's ID, age and sex", first_file_list) ###list of lists
-
+print()
+###present the information in a nicer format
+patient_age_sex = pd.DataFrame(first_file_list)
+print(patient_age_sex)
 
 ############################################################################
 ##########################  Q2 #############################################
@@ -256,8 +260,9 @@ for i in list_of_dcm_objects:
     list_of_hospitals.append(hospital)
 unique_hospital = set(list_of_hospitals)
 
+print()
 print("Q2 - there are {} unique hospitals, named {}".format(len(unique_hospital),unique_hospital)) #there are 3 unique hospitals
-
+print()
 
 ############################################################################
 ##########################  Q3 #############################################
@@ -276,7 +281,7 @@ print("Q2 - there are {} unique hospitals, named {}".format(len(unique_hospital)
 
 sub_dataset=[]
 for object in list_of_dcm_objects:
-    sub_dataset.append([object.dcm, object.creation_time, object.acquisition_time, object.acquisition_number, object.instance_number])
+    sub_dataset.append([object.file_name, object.creation_time, object.acquisition_time, object.acquisition_number, object.instance_number])
 
 sub_dataset = pd.DataFrame(sub_dataset)   ###sub_dataset is a pandas file
 sub_dataset.columns = ["object name", "Instance​Creation​Time", "Acquisition​Time", "Acquisition​Number", "Instance​Number"]
@@ -293,8 +298,9 @@ print("Q3 - what the DICOM tags mean?\n"
       "0x0020,0x0012 - Acquisition​Number -the official doccumentation: A number identifying the single continuous gathering of data over a period of time that resulted in this instance - this is vague\n"
       # "you can read about the differences between instance number and Acquisition​Number in here: https://clearcanvas.ca/Home/Community/OldForums/tabid/526/aff/8/aft/1378/afv/topic/Default.aspx\n"
       "0x0020,0x0013 - Instance​Number - A number that identifies a spesific image\n"
+print()
       "It is important to notice that in this spesific dataset: the attribute Instance​Creation​Time is missing in 70 dcm files (17.2% of files)")
-
+print()
 # I looked in the spesific dataset, to see what does it contain in practice:
 
 #print(sub_dataset)
@@ -302,10 +308,12 @@ print("Q3 - what the DICOM tags mean?\n"
 #sub_dataset.corr()[1:3]
 print("In practice, I would aregue that the Acquisition​Time is when the data was started to gather while Instance​Creation​Time is the time the data was started to being written (created)")
 print("Statisticlly, they do not correlation (pearson correlation of: 0.424306)")
+print()
 
 print("The Instance​Number is a serial based on number of images taking in a series \n"
       "The Acquisition​Number sub devide the Instance​Number to smaler groups, not sure based on what\n"
       "maybe it just devide the writing on the file based on groups of every 3/4 images")
+print()
 
 ###IT MIGHT BE NICE TO LOOK ON THE DISTRIBUTION OF THE DIFFERENCES BETWEEN THE VALUES. - did not do that
 
@@ -326,6 +334,7 @@ print("The Instance​Number is a serial based on number of images taking in a s
 print("Q4 -  length of CT scans - I do not have answer from the dataset, but I do have strategy how to gather the answer\n"
       "To understand how long does a CT scan take, I would calculate the time difference between the start time of the first and last imaging in each series\n"
       "then, I would average the lengths upon patients")
+
 
 ###this did not worked:
 # min_time = {}
