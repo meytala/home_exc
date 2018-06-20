@@ -1,7 +1,7 @@
 __author__      = "Meytal Avgil Tsadok"
 __copyright__   = "Copyright 2018, TLV Israel"
 __credits__ = "She codes - Final project"
-__version__ = "1.0.1"  ####this version was modified to fit the DICOM files
+__version__ = "1.0.1"
 __maintainer__ = "Meytal Avgil Tsadok"
 __email__ = "meytala@gmail.com"
 __status__ = "Production"

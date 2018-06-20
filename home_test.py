@@ -28,7 +28,7 @@ import json
 #          data = response.read() # a `bytes` object
 #          out_file.write(data)
 #
-# # print(sys.argv[-1])  ##qa
+# # # print(sys.argv[-1])  ##qa
 # url=sys.argv[-1]
 # get_url(url, "DICOM", "C:/Users/meyta/PycharmProjects/viz_ai")  ###this works on my computer. need to modify path to match the user computer
 
@@ -243,7 +243,7 @@ for i in demographic_list:
     if i not in first_file_list:
         first_file_list.append(i)
 
-print("Q1- the follwing is list of (lists of) patient's ID, age and sex", first_file_list) ###list of lists
+print("Q1 - the follwing is list of (lists of) patient's ID, age and sex", first_file_list) ###list of lists
 
 
 ############################################################################
@@ -288,7 +288,7 @@ sub_dataset.columns = ["object name", "Instance​Creation​Time", "Acquisition
 # seenopsis.process_pandas_df(sub_dataset)
 ## seenopss output is also in the git, if the seenopsis doesn't run
 
-print("Q3: what the DICOM tags mean?\n"
+print("Q3 - what the DICOM tags mean?\n"
       "reading the lit, this is the doccumentation:\n"
       "0x0008,0x0013 - Instance​Creation​Time - value represenation:TM - A string of characters of the format hhmmss - Time the Protocol SOP Instance was created\n" 
       "0x0008,0x0032 - Acquisition​Time -  value represenation:TM - A string of characters of the format hhmmss.ffffff (fractional seconds) - The time that the acquisition of data that resulted in this instance started.\n" 
@@ -325,7 +325,7 @@ print("The Instance​Number is a serial based on number of images taking in a s
 ## I could not find an attribute that indicate the end time in the DICOM files
 ## my strategy: calculate the dif between time of first imag to time of last image within each patient's study
 
-print("Q4: length of CT scans - I do not have answer from the dataset, but I do have strategy how to gather the answer\n"
+print("Q4 -  length of CT scans - I do not have answer from the dataset, but I do have strategy how to gather the answer\n"
       "To understand how long does a CT scan take, I would calculate the time difference between the start time of the first and last imaging in each series\n"
       "then, I would average the lengths upon patients")
 
@@ -355,5 +355,4 @@ print("Q4: length of CT scans - I do not have answer from the dataset, but I do 
 #     else: max_time.update({object.patient_id:{object.study_id:{object.series_id:object.acquisition_time}}})
 #
 # print(max_time)
-
 
