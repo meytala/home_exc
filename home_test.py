@@ -20,17 +20,15 @@ import json
 #######and download the files to a folder###########################
 ####################################################################
 
-####the following is not activated. once you run it and get the file, you do not have to do it again.
+def get_url(url, filename, myPath):
+    with urllib.request.urlopen(url) as response, open("DM_TH.tgz", 'wb') as out_file:
+         shutil.copyfileobj(response, out_file)
+         data = response.read() # a `bytes` object
+         out_file.write(data)
 
-# def get_url(url, filename, myPath):
-#     with urllib.request.urlopen(url) as response, open("DM_TH.tgz", 'wb') as out_file:
-#          shutil.copyfileobj(response, out_file)
-#          data = response.read() # a `bytes` object
-#          out_file.write(data)
-#
-# # # print(sys.argv[-1])  ##qa
-# url=sys.argv[-1]
-# get_url(url, "DICOM", "C:/Users/meyta/PycharmProjects/viz_ai")  ###this works on my computer. need to modify path to match the user computer
+# # print(sys.argv[-1])  ##qa
+url=sys.argv[-1]
+get_url(url, "DICOM", "C:/Users/meyta/PycharmProjects/viz_ai")  ### !!!!! this works on my computer. need to modify path to match the user computer
 
 #the command in cmd:  C:\Users\meyta\PycharmProjects\viz_ai>python home_test.py https://s3.amazonaws.com/viz_data/DM_TH.tgz
 
@@ -71,7 +69,7 @@ extract("DM_TH.tgz", "C:/Users/meyta/PycharmProjects/viz_ai")
 #in the computer I was working on, the path is "C:\\Users\\meyta\\PycharmProjects\\viz_ai\\*.dcm")
 
 ##need to modify the follow to work in a nother computer, based on file location:
-filename = data_manager.get_files("C:\\Users\\meyta\\PycharmProjects\\viz_ai\\", "*.dcm")[3]  ##qa tried 0, 1, 2, 3: Study Instance UID and 1.2.840.113619.2.337.3.2831186181.442.1421722000.427 are equal, SOP Instance UID differ
+# filename = data_manager.get_files("C:\\Users\\meyta\\PycharmProjects\\viz_ai\\", "*.dcm")[3]  ##qa tried 0, 1, 2, 3: Study Instance UID and 1.2.840.113619.2.337.3.2831186181.442.1421722000.427 are equal, SOP Instance UID differ
 # print(filename)           ##qa
 # ds = pydicom.dcmread(filename)   ####reading the file
 # print(ds)
