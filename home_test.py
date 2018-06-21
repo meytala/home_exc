@@ -7,10 +7,12 @@ import shutil
 import sys
 import tarfile
 import pandas as pd
-import seenopsis
+# import seenopsis
 import matplotlib.pyplot as plt
-import json
 
+
+myPath = os.getcwd()
+# print(myPath)
 
 # write a python script that receives the URL as a command-line argument and:
 # - downloads the file
@@ -20,15 +22,21 @@ import json
 #######and download the files to a folder###########################
 ####################################################################
 
+######################################################################################3##
+######################################################################################3##
+####instruction: please run the program from the commande prompt from its own directory##
+######################################################################################3##
+######################################################################################3##
+
+
 def get_url(url, myPath):
     with urllib.request.urlopen(url) as response, open("DM_TH.tgz", 'wb') as out_file:
          shutil.copyfileobj(response, out_file)
          data = response.read() # a `bytes` object
          out_file.write(data)
 
-# # print(sys.argv[-1])  ##qa
+# print(sys.argv[-1])  ##qa
 url=sys.argv[-1]  ##read from the command line
-myPath= os.getcwd()
 get_url(url, myPath)
 
 #the command in cmd:  C:\Users\meyta\PycharmProjects\viz_ai>python home_test.py https://s3.amazonaws.com/viz_data/DM_TH.tgz
@@ -46,7 +54,6 @@ def extract(tar_file, my_path):
 
 extract("DM_TH.tgz", myPath)
 
-
 #################################################################################
 ###########arranges the files according to the DICOM hierarchy###################
 #################################################################################
@@ -62,15 +69,7 @@ extract("DM_TH.tgz", myPath)
 ###############read the files########################################
 #####################################################################
 
-######got many errors trying to use:
-#filename = get_testdata_files("rtplan.dcm")[0]           #is not defined
-# filename = get_testdata_files("*.dcm")[0]           #is not defined
-
-#the problem was that I received an empty list., ecause the path was wrong (lead to the path of where I downloaded pydicom
-#in the computer I was working on, the path is "C:\\Users\\meyta\\PycharmProjects\\viz_ai\\*.dcm")
-
-##need to modify the follow to work in a nother computer, based on file location:
-# filename = data_manager.get_files("C:\\Users\\meyta\\PycharmProjects\\viz_ai\\", "*.dcm")[3]  ##qa tried 0, 1, 2, 3: Study Instance UID and 1.2.840.113619.2.337.3.2831186181.442.1421722000.427 are equal, SOP Instance UID differ
+# list_of_files = data_manager.get_files(myPath, "*.dcm")[3]  ##qa tried 0, 1, 2, 3: Study Instance UID and 1.2.840.113619.2.337.3.2831186181.442.1421722000.427 are equal, SOP Instance UID differ
 # print(filename)           ##qa
 # ds = pydicom.dcmread(filename)   ####reading the file
 # print(ds)
@@ -86,7 +85,7 @@ for i in range (0,406):
     ds = pydicom.dcmread(filename)
     list_of_files.append(ds)
 
-# print("first file:", list_of_files[3])              #qa - worked!!
+# print("first file:", list_of_files[0])              #qa - worked!!
 
 #############a glance to the file
 
@@ -119,8 +118,7 @@ for i in range (0,406):
 
 
 
-##running through the samples, I nade sure what is the study unique id and what is the series unique id
-
+##running through the samples, I made sure what is the study unique id and what is the series unique id
 
 
 #######################################################################
@@ -143,11 +141,33 @@ class ProcessDcm:
         self.acquisition_time = ds.AcquisitionTime
         self.acquisition_number = ds.AcquisitionNumber
         self.instance_number = ds.InstanceNumber
+        self.study_time   = ds.StudyTime
+        self.series_time   = ds.SeriesTime
         self.content_time = ds.ContentTime
+        try:
+            self.procedure_step_time = ds.PerformedProcedureStepStartTime  ####somthing is wrong in here - some of the object do not have this attribute
+        except AttributeError as error:
+            self.procedure_step_time = None   ##### when the attribute is missing, give it None
+        try:
+            self.delta_start_time = ds.DeltaStartTime  ####somthing is wrong in here - some of the object do not have this attribute
+        except AttributeError as error:
+            self.delta_start_time = None   ##### when the attribute is missing, give it None
+        try:
+            self.start_time = ds.StartTimeSecsInFirstAxial  ####somthing is wrong in here - some of the object do not have this attribute
+        except AttributeError as error:
+            self.start_time = None   ##### when the attribute is missing, give it None
+        try:
+            self.mid_scan_time = ds.MidScanTime  ####somthing is wrong in here - some of the object do not have this attribute
+        except AttributeError as error:
+            self.mid_scan_time = None   ##### when the attribute is missing, give it None
         try:
             self.creation_time = ds.InstanceCreationTime  ####somthing is wrong in here - some of the object do not have this attribute
         except AttributeError as error:
             self.creation_time = None   ##### when the attribute is missing, give it None
+        try:
+            self.end_time = ds.PerformedProcedureStepEndTime  ####somthing is wrong in here - some of the object do not have this attribute
+        except AttributeError as error:
+            self.end_time = None   ##### when the attribute is missing, give it None
 
 
 ###########Create a list of object with the attributes of ProcessDcm class:
@@ -159,10 +179,9 @@ for i in range (0,406):
 
 
 # for object in list_of_dcm_objects:               ##qa print all patients id - worked!
-#     print("list of names based on objects method", object.patient_id)
+#   print("list of names based on objects method", object.patient_id)
 
 print("This dataset has {} dcm files".format (len(list_of_dcm_objects)))  ##qa - 406 files - perfect!
-
 
 #############create a list of patients' names (IDs) based on the objects in the class ProcessDcm
 
@@ -185,6 +204,7 @@ def unique(list1):
     return(unique_list)
 
 print("The dataset contain {} unique ids".format (len(unique(list_of_names())))) ####6 unique IDs
+print( )
 
 unique_id_list = unique(list_of_names())
 # print(unique_id_list)         #qa worked!
@@ -197,7 +217,6 @@ unique_id_list = unique(list_of_names())
 ########Create a subfolder for each unique series ##########
 ########move files of patient to the right folder ##########
 ############################################################
-
 
 
 current_directory = os.getcwd()
@@ -221,7 +240,6 @@ for object in list_of_dcm_objects:
 
 
 
-
 ############################################################################
 ##########################  Q1 #############################################
 ############################################################################
@@ -241,9 +259,9 @@ for i in demographic_list:
     if i not in first_file_list:
         first_file_list.append(i)
 
-print()
+print( )
 print("Q1 - the follwing is list of (lists of) patient's ID, age and sex", first_file_list) ###list of lists
-print()
+print( )
 ###present the information in a nicer format
 patient_age_sex = pd.DataFrame(first_file_list)
 print(patient_age_sex)
@@ -260,9 +278,9 @@ for i in list_of_dcm_objects:
     list_of_hospitals.append(hospital)
 unique_hospital = set(list_of_hospitals)
 
-print()
+print( )
 print("Q2 - there are {} unique hospitals, named {}".format(len(unique_hospital),unique_hospital)) #there are 3 unique hospitals
-print()
+print( )
 
 ############################################################################
 ##########################  Q3 #############################################
@@ -276,47 +294,62 @@ print()
 # # - 0x0020,0x0012 - Acquisition​Number
 # # - 0x0020,0x0013 - Instance​Number
 
-
 ####to answer this question, I created a sub_dataset with the relevant variables
 
 sub_dataset=[]
 for object in list_of_dcm_objects:
-    sub_dataset.append([object.file_name, object.creation_time, object.acquisition_time, object.acquisition_number, object.instance_number])
+    sub_dataset.append([object.file_name,
+                        object.patient_id,
+                        object.series_id,
+                        object.study_id,
+                        object.creation_time,
+                        object.acquisition_time,
+                        object.acquisition_number,
+                        object.instance_number])
 
 sub_dataset = pd.DataFrame(sub_dataset)   ###sub_dataset is a pandas file
-sub_dataset.columns = ["object name", "Instance​Creation​Time", "Acquisition​Time", "Acquisition​Number", "Instance​Number"]
+sub_dataset.columns = (["object name",
+                       "patient ID",
+                       "series ID",
+                       "study ID",
+                       "Instance​Creation​Time",
+                       "Acquisition​Time",
+                       "Acquisition​Number",
+                       "Instance​Number"])
 
 ## as a first step, I explored the variables, using my program named seenopsis.
-## the programm for seenopsis is in the github. I modified it to fit this spesific dataset
+## seenopsis programm is in the github. I modified it to fit this spesific dataset
 # seenopsis.process_pandas_df(sub_dataset)
 ## seenopss output is also in the git, if the seenopsis doesn't run
 
-print("Q3 - what the DICOM tags mean?\n"
-      "reading the lit, this is the doccumentation:\n"
-      "0x0008,0x0013 - Instance​Creation​Time - value represenation:TM - A string of characters of the format hhmmss - Time the Protocol SOP Instance was created\n" 
-      "0x0008,0x0032 - Acquisition​Time -  value represenation:TM - A string of characters of the format hhmmss.ffffff (fractional seconds) - The time that the acquisition of data that resulted in this instance started.\n" 
-      "0x0020,0x0012 - Acquisition​Number -the official doccumentation: A number identifying the single continuous gathering of data over a period of time that resulted in this instance - this is vague\n"
+print("Q3 - what the DICOM tags mean?\n")
+      # "reading the lit, this is the doccumentation:\n"
+      # "0x0008,0x0013 - Instance​Creation​Time - value represenation:TM - A string of characters of the format hhmmss - Time the Protocol SOP Instance was created\n"
+      # "0x0008,0x0032 - Acquisition​Time -  value represenation:TM - A string of characters of the format hhmmss.ffffff (fractional seconds) - The time that the acquisition of data that resulted in this instance started.\n"
+      # "0x0020,0x0012 - Acquisition​Number -the official doccumentation: A number identifying the single continuous gathering of data over a period of time that resulted in this instance - this is vague\n"
       # "you can read about the differences between instance number and Acquisition​Number in here: https://clearcanvas.ca/Home/Community/OldForums/tabid/526/aff/8/aft/1378/afv/topic/Default.aspx\n"
-      "0x0020,0x0013 - Instance​Number - A number that identifies a spesific image\n"
-print()
-      "It is important to notice that in this spesific dataset: the attribute Instance​Creation​Time is missing in 70 dcm files (17.2% of files)")
-print()
+      # "0x0020,0x0013 - Instance​Number - A number that identifies a spesific image\n")
+
+      # "It is important to notice that in this spesific dataset: the attribute Instance​Creation​Time is missing in 70 dcm files (17.2% of files)")
 # I looked in the spesific dataset, to see what does it contain in practice:
 
-#print(sub_dataset)
+# print(sub_dataset)
+
+####I created a csv file named sub_dataset
+sub_dataset.to_csv(myPath+"/sub_dataset.csv")
+
+print("In practice, I would argue that the Acquisition​Time is when the data was started to gather"
+      " while Instance​Creation​Time is the time the data was started being written (created/burn to memory)"
+      "I guess that it depends on the resolution of the picture or the machine - the time to create the file varies between ~4-160 seconds")
 
 #sub_dataset.corr()[1:3]
-print("In practice, I would aregue that the Acquisition​Time is when the data was started to gather while Instance​Creation​Time is the time the data was started to being written (created)")
-print("Statisticlly, they do not correlation (pearson correlation of: 0.424306)")
-print()
+# print("Statisticlly, they do not correlate (pearson correlation of: 0.424306)") ##I didn't expect them to
+print( )
 
 print("The Instance​Number is a serial based on number of images taking in a series \n"
-      "The Acquisition​Number sub devide the Instance​Number to smaler groups, not sure based on what\n"
-      "maybe it just devide the writing on the file based on groups of every 3/4 images")
-print()
-
-###IT MIGHT BE NICE TO LOOK ON THE DISTRIBUTION OF THE DIFFERENCES BETWEEN THE VALUES. - did not do that
-
+      "The Acquisition​Number sub divide the Instance​Number to smaler groups, not sure based on what\n"
+      "maybe it just divide the writing on the file to batches of 3/4 images")
+print( )
 
 
 # # 4) How long does a typical CT scan take?
@@ -329,37 +362,47 @@ print()
 #[Duration of X-ray on]
 
 ## I could not find an attribute that indicate the end time in the DICOM files
-## my strategy: calculate the dif between time of first imag to time of last image within each patient's study
+## my strategy: calculate the dif between time of first image to time of last image within each patient's study
 
-print("Q4 -  length of CT scans - I do not have answer from the dataset, but I do have strategy how to gather the answer\n"
-      "To understand how long does a CT scan take, I would calculate the time difference between the start time of the first and last imaging in each series\n"
-      "then, I would average the lengths upon patients")
+#### I created a list of instance that are related to time
+times_list = []
+for object in list_of_dcm_objects:
+    list_of_times = (
+    object.patient_id,
+    object.file_name,
+    object.start_time,
+    object.study_time,
+    object.series_time,
+    object.procedure_step_time,
+    object.mid_scan_time,
+    object.acquisition_time,
+    object.creation_time,
+    object.end_time,
+    object.delta_start_time)
+    times_list.append(list_of_times)
 
 
-###this did not worked:
-# min_time = {}
-# for object in list_of_dcm_objects:
-#     if object.patient_id in min_time:
-#         if object.study_id in min_time[object.patient_id]:
-#             if object.series_id in min_time[object.patient_id][object.study_id]:
-#                 if object.acquisition_time < min_time[object.patient_id][object.study_id][object.series_id]:
-#                     min_time[object.patient_id][object.study_id][object.series_id] = object.acquisition_time
-#             else: min_time[object.patient_id][object.study_id] = {object.series_id:object.acquisition_time}
-#         else: min_time[object.patient_id] = {object.study_id:{object.series_id:object.acquisition_time}}
-#     else: min_time.update({object.patient_id:{object.study_id:{object.series_id:object.acquisition_time}}})
-#
-# print(min_time)
-#
-# max_time = {}
-# for object in list_of_dcm_objects:
-#     if object.patient_id in max_time:
-#         if object.study_id in max_time[object.patient_id]:
-#             if object.series_id in max_time[object.patient_id][object.study_id]:
-#                 if object.acquisition_time > max_time[object.patient_id][object.study_id][object.series_id]:
-#                     max_time[object.patient_id][object.study_id][object.series_id] = object.acquisition_time
-#             else: max_time[object.patient_id][object.study_id] = {object.series_id:object.acquisition_time}
-#         else: max_time[object.patient_id] = {object.study_id:{object.series_id:object.acquisition_time}}
-#     else: max_time.update({object.patient_id:{object.study_id:{object.series_id:object.acquisition_time}}})
-#
-# print(max_time)
+####create a "time" dataset in pandas
+time_dataset = pd.DataFrame(times_list)   ###sub_dataset is a pandas file
+time_dataset.columns = (
+    ["object.patient_id",
+    "object.file_name",
+    "object.start_time",
+    "object.study_time",
+    "object.series_time",
+    "object.procedure_step_time",
+    "object.mid_scan_time",
+    "object.acquisition_time",
+    "object.creation_time",
+    "object.end_time",
+     "object.delta_start_time"])
 
+# print(time_dataset)
+
+###export to csv
+time_dataset.to_csv(myPath+"/time_dataset.csv")
+
+print("Q4 -  length of CT scans - based on the differences between last creation and first study time \n"
+      "it looks like the ct imaging take about 1- 3 minutes. \n "
+      "however, I know that CT scans take usually around 30 minutes \n"
+      "so maybe it depends if there was contrast injected, or somthing that is not concerning the imag it self is a time consumming \n")
