@@ -406,3 +406,15 @@ print("Q4 -  length of CT scans - based on the differences between last creation
       "it looks like the ct imaging take about 1- 3 minutes. \n "
       "however, I know that CT scans take usually around 30 minutes \n"
       "so maybe it depends if there was contrast injected, or somthing that is not concerning the imag it self is a time consumming \n")
+print( )
+
+print("Q- view the scans - anything seems particularly interesting?"
+      "in some pictures, you can nicely see some calcification in arteries"
+      "In patient with ID ending in 623, there is a suspectly BIG MASS  (3 x 2.7 cm) in right frontal lobe")
+
+print()
+
+print ("Q - explain the differeneces between 2 series of same patients"
+       "obviously, one serious has 32 images and the second has 256"
+       "I guess it has to do with exploring the BIG MASS over there..."
+       "one scan (se 2) is every 5 mm, while the other (se 3) is every 0.6 mm")
