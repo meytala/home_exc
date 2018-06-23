@@ -10,23 +10,23 @@ import pandas as pd
 # import seenopsis
 import matplotlib.pyplot as plt
 
-
-myPath = os.getcwd()
-# print(myPath)
-
+#################################################################################
 # write a python script that receives the URL as a command-line argument and:
 # - downloads the file
+#################################################################################
+
+myPath = os.getcwd()
 
 ####################################################################
 #######a function that read the argument from the command line######
 #######and download the files to a folder###########################
 ####################################################################
 
-######################################################################################3##
-######################################################################################3##
-####instruction: please run the program from the commande prompt from its own directory##
-######################################################################################3##
-######################################################################################3##
+#########################################################################################
+#########################################################################################
+####instruction: please run the program from the command-line from its own directory#####
+####################### to find the directory,  print(myPath)############################
+#########################################################################################
 
 
 def get_url(url, myPath):
@@ -39,7 +39,7 @@ def get_url(url, myPath):
 url=sys.argv[-1]  ##read from the command line
 get_url(url, myPath)
 
-#the command in cmd:  C:\Users\meyta\PycharmProjects\viz_ai>python home_test.py https://s3.amazonaws.com/viz_data/DM_TH.tgz
+#an example for a command in cmd:  C:\Users\meyta\PycharmProjects\viz_ai>python home_test.py https://s3.amazonaws.com/viz_data/DM_TH.tgz
 
 ####################################################################
 #######a function that extract the tgz folder#######################
@@ -55,7 +55,7 @@ def extract(tar_file, my_path):
 extract("DM_TH.tgz", myPath)
 
 #################################################################################
-###########arranges the files according to the DICOM hierarchy###################
+# arranges the files according to the DICOM hierarchy
 #################################################################################
 
 #Note that patient names were replaced with IDs to protect their privacy.
@@ -69,9 +69,9 @@ extract("DM_TH.tgz", myPath)
 ###############read the files########################################
 #####################################################################
 
-# list_of_files = data_manager.get_files(myPath, "*.dcm")[3]  ##qa tried 0, 1, 2, 3: Study Instance UID and 1.2.840.113619.2.337.3.2831186181.442.1421722000.427 are equal, SOP Instance UID differ
-# print(filename)           ##qa
-# ds = pydicom.dcmread(filename)   ####reading the file
+# list_of_files = data_manager.get_files(myPath, "*.dcm")
+# print(list_of_files)           ##qa
+# ds = pydicom.dcmread(list_of_files)   ####reading the files
 # print(ds)
 # print(ds.dir())          #see the attributes of each ds file
 # print(ds.keys())       #see all available keys
@@ -339,7 +339,7 @@ print("Q3 - what the DICOM tags mean?\n")
 sub_dataset.to_csv(myPath+"/sub_dataset.csv")
 
 print("In practice, I would argue that the Acquisition​Time is when the data was started to gather"
-      " while Instance​Creation​Time is the time the data was started being written (created/burn to memory)"
+      "while Instance​Creation​Time is the time the data was started being written (created/burn to memory)"
       "I guess that it depends on the resolution of the picture or the machine - the time to create the file varies between ~4-160 seconds")
 
 #sub_dataset.corr()[1:3]
@@ -347,7 +347,7 @@ print("In practice, I would argue that the Acquisition​Time is when the data w
 print( )
 
 print("The Instance​Number is a serial based on number of images taking in a series \n"
-      "The Acquisition​Number sub divide the Instance​Number to smaler groups, not sure based on what\n"
+      "The Acquisition​Number sub divide the Instance​Number to smaller groups, not sure based on what\n"
       "maybe it just divide the writing on the file to batches of 3/4 images")
 print( )
 
@@ -395,7 +395,7 @@ time_dataset.columns = (
     "object.acquisition_time",
     "object.creation_time",
     "object.end_time",
-     "object.delta_start_time"])
+    "object.delta_start_time"])
 
 # print(time_dataset)
 
@@ -403,18 +403,18 @@ time_dataset.columns = (
 time_dataset.to_csv(myPath+"/time_dataset.csv")
 
 print("Q4 -  length of CT scans - based on the differences between last creation and first study time \n"
-      "it looks like the ct imaging take about 1- 3 minutes. \n "
+      "it looks like the ct imaging itself takes about 1 - 3 minutes. \n "
       "however, I know that CT scans take usually around 30 minutes \n"
-      "so maybe it depends if there was contrast injected, or somthing that is not concerning the imag it self is a time consumming \n")
+      "so maybe it depends if there was contrast injected, or somthing that is not concerning the imaging itself, which is a time consumming \n")
 print( )
 
 print("Q- view the scans - anything seems particularly interesting?"
-      "in some pictures, you can nicely see some calcification in arteries"
-      "In patient with ID ending in 623, there is a suspectly BIG MASS  (3 x 2.7 cm) in right frontal lobe")
+      "in some pictures, you can nicely see some calcifications in arteries"
+      "nothing special except for this BIG MASS (3 x 2.7 cm) in ID ending in 623, right frontal lobe")
 
 print()
 
-print ("Q - explain the differeneces between 2 series of same patients"
-       "obviously, one serious has 32 images and the second has 256"
+print ("Q - explain the differeneces between 2 series of same patient"
+       "obviously, one series has 32 images and the second has 256"
        "I guess it has to do with exploring the BIG MASS over there..."
        "one scan (se 2) is every 5 mm, while the other (se 3) is every 0.6 mm")
